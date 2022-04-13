@@ -1,7 +1,7 @@
 {{#each this}}
 <div class="photo-card">
-<a href="{{largeImageURL}}">
-  <img src="{{webformatURL}}" alt="{{tags}}" loading="lazy" width=480/>
+<a class="gallery__link" href="{{largeImageURL}}" onclick="event.preventDefault()">
+  <img class="gallery__image" src="{{webformatURL}}" alt="{{tags}}" loading="lazy" />
   <div class="info">
     <p class="info-item">
       <b>Likes</b>
