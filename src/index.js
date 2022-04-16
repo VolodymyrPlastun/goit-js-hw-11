@@ -5,58 +5,72 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 import ImagesApiServise from './fetchImages-api';
 import imagesMarcup from './gallery.hbs';
 
+
 const imagesApi = new ImagesApiServise();
 const refs = {
     form: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
-    loadMoreBtn: document.querySelector('.load-more'),
+  loadMoreBtn: document.querySelector('.load-more'),
 }
+
 
 refs.form.addEventListener('submit', OnSubmitSearch);
 refs.loadMoreBtn.addEventListener('click', onLoadMore);
 
-function OnSubmitSearch (evt) {
-    evt.preventDefault();
+async function OnSubmitSearch (evt) {
+  evt.preventDefault();
 
-    imagesApi.value = evt.currentTarget.elements.searchQuery.value;
+  refs.loadMoreBtn.classList.remove('is-hidden');
+
+  clearGallery();
+  
+  imagesApi.value = evt.currentTarget.elements.searchQuery.value;
+
+  if (imagesApi.inputValue === '') {
+    Notiflix.Notify.warning('Please, enter your request');
+    return;
+  }
+  const searchImages = await imagesApi.fetchImages();
+          if (searchImages.hits.length === 0) {
+                Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+                return;
+        } else {
+    Notiflix.Notify.success(`Hooray! We found ${searchImages.totalHits} images.`);
+       }
+  
   imagesApi.resetPage();
-  imagesApi.fetchImages().then(createGalleryMarckup);
-  // imagesApi.fetchImages().then(searchImages);
+  const createImages = await createGalleryMarckup(searchImages);
 }
 
-function onLoadMore() {
- imagesApi.fetchImages().then(createGalleryMarckup);
-  // imagesApi.fetchImages().then(searchImages);
+async function onLoadMore() {
+  const searchImages = await imagesApi.fetchImages();
+  const createImages = await createGalleryMarckup(searchImages);
+    console.log(searchImages);
+
+    if (searchImages.hits.length === 0) {
+      Notiflix.Notify.warning("We're sorry, but you've reached the end of search results.");
+      refs.loadMoreBtn.classList.remove('is-hidden');
+                return;
+  }
 }
 
-function createGalleryMarckup(images) {
-  refs.gallery.insertAdjacentHTML('beforeend', imagesMarcup(images));
+async function createGalleryMarckup(images) {
+  const galleryImages = await images.hits;
+  refs.loadMoreBtn.classList.add('is-hidden');
+  refs.gallery.insertAdjacentHTML('beforeend', imagesMarcup(galleryImages));
+   
 }
 
-// function searchImages(images) {
-//     // console.log(images);
-//      const galleryMarcup = images.map(({webformatURL, largeImageURL, tags, likes, views, comments, downloads}) => {
-//          return `<div class="photo-card">
-//   <a class="gallery__link" href="${largeImageURL}">
-//     <img class="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" />
-//     <div class="info">
-//       <p class="info-item">
-//         <b>${likes}</b>
-//       </p>
-//       <p class="info-item">
-//         <b>${views}</b>
-//       </p>
-//       <p class="info-item">
-//         <b>${comments}</b>
-//       </p>
-//       <p class="info-item">
-//         <b>${downloads}</b>
-//       </p>
-//     </div>
-//   </a>
-// </div>`
-//      }).join('');
-//     refs.gallery.insertAdjacentHTML('beforeend', galleryMarcup);
-// }
+function clearGallery() {
+  refs.gallery.innerHTML = '';
+}
 
-// let gallery = new SimpleLightbox('.gallery a');
+let gallery = new SimpleLightbox('.gallery a', {captionsData: 'alt', captionDelay: 250});
+
+// Не работает infinite scroll
+  // refs.gallery.addEventListener('scroll', function() {
+  //     if (refs.gallery.scrollTop + refs.gallery.clientHeight >= refs.gallery.scrollHeight) {
+  //       imagesApi.fetchImages().then(createGalleryMarckup);
+  //       console.log('end of page');
+  // }
+  // })
