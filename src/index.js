@@ -25,47 +25,58 @@ async function OnSubmitSearch (evt) {
   clearGallery();
   
   imagesApi.value = evt.currentTarget.elements.searchQuery.value;
-
+imagesApi.resetPage();
   if (imagesApi.inputValue === '') {
     Notiflix.Notify.warning('Please, enter your request');
     return;
   }
-  const searchImages = await imagesApi.fetchImages();
-          if (searchImages.hits.length === 0) {
+  try {
+    const searchImages = await imagesApi.fetchImages();
+               if (searchImages.hits.length === 0) {
                 Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
                 return;
         } else {
     Notiflix.Notify.success(`Hooray! We found ${searchImages.totalHits} images.`);
-       }
+               }
+     const createImages = await createGalleryMarckup(searchImages);
+  } catch (error) {
+    console.log(error);
+  }
   
-  imagesApi.resetPage();
-  const createImages = await createGalleryMarckup(searchImages);
+
 }
 
 async function onLoadMore() {
-  const searchImages = await imagesApi.fetchImages();
+  try {
+      const searchImages = await imagesApi.fetchImages();
   const createImages = await createGalleryMarckup(searchImages);
-    console.log(searchImages);
-
+  console.log(searchImages);
     if (searchImages.hits.length === 0) {
       Notiflix.Notify.warning("We're sorry, but you've reached the end of search results.");
       refs.loadMoreBtn.classList.remove('is-hidden');
                 return;
   }
+  } catch (error) {
+    console.log(error);
+  }
+
 }
 
 async function createGalleryMarckup(images) {
-  const galleryImages = await images.hits;
+  try {
+     const galleryImages = await images.hits;
   refs.loadMoreBtn.classList.add('is-hidden');
   refs.gallery.insertAdjacentHTML('beforeend', imagesMarcup(galleryImages));
-   
+  } catch (error) {
+        console.log(error);
+  }
 }
 
 function clearGallery() {
   refs.gallery.innerHTML = '';
 }
 
-let gallery = new SimpleLightbox('.gallery a', {captionsData: 'alt', captionDelay: 250});
+let gallery = new SimpleLightbox('.gallery a');
 
 // Не работает infinite scroll
   // refs.gallery.addEventListener('scroll', function() {
